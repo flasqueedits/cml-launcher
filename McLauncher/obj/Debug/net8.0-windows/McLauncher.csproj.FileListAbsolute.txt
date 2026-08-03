@@ -1,0 +1,14 @@
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\obj\Debug\net8.0-windows\McLauncher.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\obj\Debug\net8.0-windows\McLauncher.AssemblyInfoInputs.cache
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\obj\Debug\net8.0-windows\McLauncher.AssemblyInfo.cs
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\obj\Debug\net8.0-windows\McLauncher.csproj.CoreCompileInputs.cache
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\bin\Debug\net8.0-windows\McLauncher.exe
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\bin\Debug\net8.0-windows\McLauncher.deps.json
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\bin\Debug\net8.0-windows\McLauncher.runtimeconfig.json
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\bin\Debug\net8.0-windows\McLauncher.dll
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\bin\Debug\net8.0-windows\McLauncher.pdb
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\obj\Debug\net8.0-windows\McLauncher.dll
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\obj\Debug\net8.0-windows\refint\McLauncher.dll
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\obj\Debug\net8.0-windows\McLauncher.pdb
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\obj\Debug\net8.0-windows\McLauncher.genruntimeconfig.cache
+C:\Users\Windows\Downloads\Mc-launcher\McLauncher\obj\Debug\net8.0-windows\ref\McLauncher.dll

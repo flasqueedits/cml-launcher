@@ -1,0 +1,177 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0f0d0a;
+  --color-surface: #1a1612;
+  --color-surface-2: #241f19;
+  --color-border: #3a3228;
+  --color-accent: #c87b3a;
+  --color-accent-dim: #6b4226;
+  --color-accent-bright: #e8944a;
+  --color-text: #f0e8dc;
+  --color-text-dim: #9a8e7e;
+  --color-danger: #e85c5c;
+  --color-glass: rgba(26, 22, 18, 0.75);
+  --color-glass-border: rgba(200, 123, 58, 0.25);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  user-select: none;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #3a3228;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #5a4a38;
+}
+
+.drag-region {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.bg-minecraft {
+  background:
+    linear-gradient(135deg, #0a1a10 0%, #0d1f16 25%, #12291a 50%, #0b1a10 75%, #081210 100%);
+}
+
+.bg-minecraft::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(34, 80, 50, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 30%, rgba(20, 60, 40, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(10, 30, 20, 0.4) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-card {
+  background: var(--color-glass);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.discord-sidebar {
+  background: rgba(18, 14, 10, 0.85);
+  border-right: 1px solid rgba(200, 123, 58, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.play-button {
+  background: linear-gradient(135deg, #8b5a2b 0%, #c87b3a 50%, #a0622e 100%);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(200, 123, 58, 0.3);
+}
+
+.play-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #a0622e 0%, #e8944a 50%, #c87b3a 100%);
+  box-shadow: 0 6px 20px rgba(200, 123, 58, 0.5);
+  transform: translateY(-1px);
+}
+
+.play-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.play-button:disabled {
+  background: linear-gradient(135deg, #3a3228 0%, #4a4238 50%, #3a3228 100%);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  transition: all 0.15s ease;
+}
+
+.icon-button:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.input-field {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input-field:focus {
+  border-color: var(--color-accent);
+}
+
+.input-field::placeholder {
+  color: var(--color-text-dim);
+}
+
+.frost-particle {
+  position: fixed;
+  width: 2px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float-up 8s linear infinite;
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh) translateX(0);
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10vh) translateX(20px);
+  }
+}

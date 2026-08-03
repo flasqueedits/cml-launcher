@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CML Launcher — Minecraft Launcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #c87b3a;
+      --accent-light: #e09850;
+      --bg: #0a0d0f;
+      --surface: #12151a;
+      --surface2: #1a1e25;
+      --border: #2a2e35;
+      --text: #e8e8e8;
+      --text-dim: #8a8e95;
+      --green: #10b981;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(10,13,15,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: #fff;
+    }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-download {
+      background: var(--accent); color: #fff; border: none; padding: 8px 20px;
+      border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-download:hover { background: var(--accent-light); transform: translateY(-1px); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden; padding: 100px 2rem 60px;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(200,123,58,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(168,85,247,0.06) 0%, transparent 50%);
+    }
+    .hero-content { position: relative; z-index: 1; text-align: center; max-width: 800px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 100px; padding: 6px 16px; margin-bottom: 1.5rem;
+      font-size: 0.8rem; color: var(--text-dim);
+    }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800;
+      line-height: 1.1; margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p { font-size: 1.15rem; color: var(--text-dim); max-width: 600px; margin: 0 auto 2rem; }
+    .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: #fff; border: none; padding: 14px 32px; border-radius: 12px;
+      font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s;
+      display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 24px rgba(200,123,58,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,123,58,0.4); }
+    .btn-secondary {
+      background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+      padding: 14px 32px; border-radius: 12px; font-weight: 600; font-size: 1rem;
+      cursor: pointer; transition: all 0.3s; text-decoration: none;
+    }
+    .btn-secondary:hover { border-color: var(--accent); background: var(--surface); }
+
+    /* STATS */
+    .stats {
+      display: flex; justify-content: center; gap: 3rem; margin-top: 3rem;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; }
+
+    /* FEATURES */
+    .features { padding: 100px 2rem; max-width: 1200px; margin: 0 auto; }
+    .section-header { text-align: center; margin-bottom: 4rem; }
+    .section-header h2 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .section-header p { color: var(--text-dim); font-size: 1.05rem; }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.75rem; transition: all 0.3s;
+    }
+    .feature-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--surface2); display: flex; align-items: center;
+      justify-content: center; font-size: 1.5rem; margin-bottom: 1rem;
+    }
+    .feature-card h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; }
+
+    /* SCREENSHOTS */
+    .screenshots { padding: 60px 2rem 100px; max-width: 1200px; margin: 0 auto; }
+    .screenshot-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+    .screenshot-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden; transition: all 0.3s;
+    }
+    .screenshot-card:hover { border-color: var(--accent); }
+    .screenshot-placeholder {
+      height: 220px; background: var(--surface2); display: flex;
+      align-items: center; justify-content: center; font-size: 3rem;
+    }
+    .screenshot-card .info { padding: 1rem 1.25rem; }
+    .screenshot-card .info h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .screenshot-card .info p { font-size: 0.8rem; color: var(--text-dim); }
+
+    /* DOWNLOAD CTA */
+    .download-cta {
+      padding: 80px 2rem; text-align: center;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);
+    }
+    .download-cta h2 { font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .download-cta p { color: var(--text-dim); margin-bottom: 2rem; }
+    .version-info { font-size: 0.8rem; color: var(--text-dim); margin-top: 1rem; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border); padding: 2rem;
+      text-align: center; color: var(--text-dim); font-size: 0.8rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* PARTICLES */
+    .particles {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .particle {
+      position: absolute; border-radius: 50%;
+      background: rgba(200,123,58,0.15);
+      animation: float linear infinite;
+    }
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero h1 { font-size: 2rem; }
+      .stats { gap: 1.5rem; }
+      .screenshot-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="particles" id="particles"></div>
+
+  <nav>
+    <div class="nav-inner">
+      <div class="logo">
+        <div class="logo-icon">C</div>
+        <span>CML Launcher</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features">Özellikler</a>
+        <a href="#screenshots">Ekran Görüntüleri</a>
+        <a href="#download">İndir</a>
+      </div>
+      <a href="#download"><button class="nav-download">⬇ İndir</button></a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-badge"><span class="dot"></span> v1.0.0 — Güncellendi</div>
+      <h1>Minecraft'ın Güçlü Launcher'ı</h1>
+      <p>Mod manager, skin desteği, sunucu keşfi, performans optimizasyonu ve daha fazlası. Tüm Minecraft deneyiminizi tek bir yerden yönetin.</p>
+      <div class="hero-buttons">
+        <a href="#download"><button class="btn-primary">⬇ Windows İçin İndir</button></a>
+        <a href="#features"><button class="btn-secondary">Özellikleri Keşfet</button></a>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value">22+</div>
+          <div class="stat-label">Sekme</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">100+</div>
+          <div class="stat-label">Komut</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">900+</div>
+          <div class="stat-label">MC Sürümü</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">10+</div>
+          <div class="stat-label">Mod Desteği</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="section-header">
+      <h2>Güçlü Özellikler</h2>
+      <p>Her Minecraft oyuncusunun ihtiyacı olan her şey</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎮</div>
+        <h3>Kolay Oyun Başlatma</h3>
+        <p>Tek tıkla Minecraft'ı başlatın. Java otomatik kurulumu, sürüm seçimi ve JVM argüman desteği.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔧</div>
+        <h3>Mod Yöneticisi</h3>
+        <p>Forge, Fabric, Quilt, NeoForge desteği. CurseForge ve Modrinth'ten doğrudan mod indirin.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧑</div>
+        <h3>Yönetimi</h3>
+        <p>Mojang'dan skin gösterme, yerel skin ekleme, Classic/Slim model seçimi.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖥️</div>
+        <h3>Sunucu Keşfi</h3>
+        <p>Popüler sunucuları keşfedin, ping atın, MOTD bilgisi görüntüleyin. Sunucu listesi yönetimi.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <h3>Texture & Shader</h3>
+        <p>Texture pack ve shader pack yönetimi. Kolayca aktif/pasif yapın, indirin.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <h3>Dünya Yedekleme</h3>
+        <p>Dünyalarınızı otomatik veya manuel olarak yedekleyin. Geri yükleme desteği.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <h3>Başarı Takipçisi</h3>
+        <p>45+ Minecraft başarımını takip edin. İlerleme, savaş, keşif ve yapı kategorileri.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>Launcher Sohbeti</h3>
+        <p>Launcher içinde chat sistemi. Sunucu bilgileri ve bot yanıtları.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>Tema Özelleştirme</h3>
+        <p>10 hazır tema ve özel renk desteği. Canlı tema önizleme.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⌨️</div>
+        <h3>Klavye Kısayolları</h3>
+        <p>Ctrl+K komut paleti, Ctrl+Enter ile hızlı başlat. VS Code tarzı navigasyon.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>İstatistikler</h3>
+        <p>Oyun süresi, crash log analizi, oyun istatistikleri. Detaylı raporlar.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💜</div>
+        <h3>Discord Entegrasyonu</h3>
+        <p>Discord RPC desteği. Sunucu成员larını görüntüleyin, durumunuzu paylaşın.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="screenshots" id="screenshots">
+    <div class="section-header">
+      <h2>Ekran Görüntüleri</h2>
+      <p>CML Launcher'ın arayüzüne bir göz atın</p>
+    </div>
+    <div class="screenshot-grid">
+      <div class="screenshot-card">
+        <div class="screenshot-placeholder">🎮</div>
+        <div class="info">
+          <h4>Ana Ekran</h4>
+          <p>Sürüm seçimi,_java durumu ve hızlı başlat butonu</p>
+        </div>
+      </div>
+      <div class="screenshot-card">
+        <div class="screenshot-placeholder">🔧</div>
+        <div class="info">
+          <h4>Mod Yöneticisi</h4>
+          <p>CurseForge ve Modrinth'ten mod indirme ve yönetme</p>
+        </div>
+      </div>
+      <div class="screenshot-card">
+        <div class="screenshot-placeholder">🖥️</div>
+        <div class="info">
+          <h4>Sunucu Keşfi</h4>
+          <p>Popüler sunucuları keşfetme ve ping atma</p>
+        </div>
+      </div>
+      <div class="screenshot-card">
+        <div class="screenshot-placeholder">🎨</div>
+        <div class="info">
+          <h4>Tema Özelleştirme</h4>
+          <p>10 hazır tema ve özel renk seçimi</p>
+        </div>
+      </div>
+      <div class="screenshot-card">
+        <div class="screenshot-placeholder">🏆</div>
+        <div class="info">
+          <h4>Başarı Takipçisi</h4>
+          <p>45+ Minecraft başarımı takibi</p>
+        </div>
+      </div>
+      <div class="screenshot-card">
+        <div class="screenshot-placeholder">🔍</div>
+        <div class="info">
+          <h4>Komut Paleti</h4>
+          <p>VS Code tarzı hızlı komut arama</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="download-cta" id="download">
+    <h2>Hemen İndirin</h2>
+    <p>Windows için CML Launcher'ı indirin ve Minecraft deneyiminizi geliştirin</p>
+    <a href="https://github.com/cml-launcher/cml-launcher/releases/latest/download/CML-Launcher-Setup.exe" target="_blank">
+      <button class="btn-primary" style="font-size: 1.1rem; padding: 16px 40px;">
+        ⬇ Windows İçin İndir (.exe)
+      </button>
+    </a>
+    <div class="version-info">Windows 10/11 • Electron 34 • ~85 MB</div>
+  </section>
+
+  <footer>
+    <p>CML Launcher — Minecraft Launcher &copy; 2026 • <a href="https://github.com/cml-launcher">GitHub</a></p>
+  </footer>
+
+  <script>
+    // Frost particles
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = 1 + Math.random() * 3;
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (10 + Math.random() * 20) + 's';
+      p.style.animationDelay = Math.random() * 15 + 's';
+      p.style.opacity = 0.1 + Math.random() * 0.3;
+      container.appendChild(p);
+    }
+
+    // Smooth scroll for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    // Nav background on scroll
+    window.addEventListener('scroll', () => {
+      const nav = document.querySelector('nav');
+      nav.style.background = window.scrollY > 50
+        ? 'rgba(10,13,15,0.95)'
+        : 'rgba(10,13,15,0.85)';
+    });
+  </script>
+</body>
+</html>

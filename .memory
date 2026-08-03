@@ -1,0 +1,56 @@
+# CML Launcher - Proje Hafızası
+
+## Genel Bakış
+- **Proje:** Minecraft Launcher (Electron + React + TypeScript + Tailwind v4)
+- **Proje Kökü:** `C:\Users\Windows\Downloads\Mc-launcher\`
+- **Ortam:** Node v24.13.0, npm 11.6.2, .NET SDK 10.0.302
+- **Build:** `npm run build` (main + renderer), `npm run typecheck` (temiz)
+- **Çalıştırma:** `npx electron .`
+
+## Mimari
+- Electron 34 + React 19 + Vite 6 + Tailwind v4
+- electron-log (log), discord-rpc (Discord), electron-builder (paketcilik)
+- Doğrulanmış API'ler: Mojang manifest (904 sürüm, latest 26.2), Adoptium, Discord RPC, CurseForge (`$2a$10$bL4bIL5pUWqfcO7KQtnMReakwtfHbNKh6v1uTpKlzhwoueEJQnPnm`), Modrinth, Minecraft.net news
+- Microsoft OAuth PKCE: `DEFAULT_CLIENT_ID = "00000000-0000-0000-0000-000000000000"`, redirect `http://localhost/callback`
+
+## Tema & UI
+- Glass-morphism center card, warm orange/brown (`#c87b3a` accent, `#1a1612` surface)
+- Blurred Minecraft background, frost particles
+- 22 tab: play, servers, server-create, resource-packs, shader-packs, mods, mod-downloader, mod-loaders, modpacks, screenshots, worlds, profiles, skins, news, server-browser, playtime, game-stats, favorites, crash-logs, updates, settings
+
+## Tamamlanan Servisler (src/main/services/)
+- `DownloadService.ts` — 8 eşzamanlılık, retry, SHA1 checksum
+- `VersionManager.ts` — Manifest cache, inheritsFrom, natives, virtual assets
+- `JavaService.ts` — Registry/PATH + Adoptium kurulumu
+- `LaunchManager.ts` — NETWORK_JVM_ARGS, classpath, natives extract, spawn
+- `AuthService.ts` — Microsoft PKCE + XBL/XSTS/MC token
+- `SettingsService.ts` — autoStart, forceUpdate, customJvmArgs
+- `DiscordService.ts` — RPC connect, setActivity, clearActivity
+- `ServerListService.ts` — CRUD, ping
+- `ModManagerService.ts` — startLocalServer (server.properties, eula, spawn)
+- `ProfileManagerService.ts` — CRUD + active profile
+- `UpdateService.ts` — GitHub API'den changelog + releaseDate ile güncelleme kontrolü
+- `OnlineServices.ts` — listModLoaders, installModLoader, searchMods, installMod, searchModpacks, installModpack (zip extract), listFavoriteServers, addFavoriteServer, removeFavoriteServer, getGameStats (bar chart data), getNews, getPopularServers, getPlayTime/recordPlayStart/End, analyzeCrashLog, getSkin
+
+## IPC & Preload
+- `ipc.ts` — 70+ handler (tüm servisler + modpacks, favorites, game-stats)
+- `preload.ts` — Tüm API method'ları contextBridge ile
+- `index.ts` — Frameless 1180x760, render-process-gone, did-finish-load log
+- `logger.ts` — electron-log (file + console)
+
+## UI Bileşenleri (src/renderer/components/)
+- Mevcut: TitleBar, CenterCard, DiscordMembers, ServerListPanel, ServerCreatePanel, ResourcePackPanel, ShaderPackPanel, ModManagerPanel, ScreenshotGallery, WorldManager, ProfileManager, SettingsPanel, LogPanel, ProgressBar
+- 1. dalgadakiler: ModLoaderInstaller, ModDownloader, SkinManager, NewsFeed, ServerBrowser, PlayTimeStats, CrashLogAnalyzer
+- 2. dalgadakiler: ModpackManager, FavoriteServers, GameStatsPanel, LauncherUpdatePanel, QuickPlay
+
+## Bilinen Sorunlar
+- Discord RPC: "connection closed" hatası (Discord çalışmıyorsa normal)
+- `searchMods` API'si tipinde `mcVersion` yok ama OnlineServices implementation'ında var — preload/ipc sadece query+source geçiriyor
+
+## Sonraki Adımlar (Potansiyel)
+- Skin yükleme/değiştirme (sadece şu an sadece gösterme var)
+- JVM args editörünü daha gelişmiş hale getirme (preset'ler)
+- Daha fazla popüler sunucu ekleme
+- Mod sürükle-bırak desteği
+- Multiplayer arkadaş listesi
+- Otomatik güncelleme mekanizması (indir + kur)
