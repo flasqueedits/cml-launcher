@@ -316,8 +316,8 @@ export interface Api {
   installMod(mod: OnlineMod, gameDir: string, onProgress?: (p: ProgressInfo) => void): Promise<void>;
   getNews(): Promise<NewsItem[]>;
   getPopularServers(): Promise<PopularServer[]>;
-  getPlayTime(versionId: string): Promise<PlayTimeRecord>;
-  getAllPlayTime(): Promise<PlayTimeRecord[]>;
+  getPlayTime(gameDir: string, versionId: string): Promise<PlayTimeRecord>;
+  getAllPlayTime(gameDir: string): Promise<PlayTimeRecord[]>;
   getCrashLogs(gameDir: string): Promise<CrashLog[]>;
   analyzeCrashLog(log: string): Promise<{ cause: string; suggestion: string }>;
   getSkin(username: string): Promise<string | null>;

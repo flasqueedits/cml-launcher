@@ -355,11 +355,14 @@ export class OnlineServices {
     await this.downloadFile(modpack.downloadUrl, zipPath, onProgress);
     onProgress?.({ message: `${modpack.name} çıkarılıyor...`, fraction: 0.8, weight: 0 });
     try {
-      const { execSync } = await import("node:child_process");
       if (process.platform === "win32") {
-        execSync(`powershell -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${tempDir}\\extracted' -Force"`, { timeout: 30000 });
+        const ps = await import("node:child_process");
+        const safeZip = zipPath.replace(/'/g, "''");
+        const safeDest = path.join(tempDir, "extracted").replace(/'/g, "''");
+        ps.execSync(`powershell -Command "Expand-Archive -Path '${safeZip}' -DestinationPath '${safeDest}' -Force"`, { timeout: 30000 });
       } else {
-        execSync(`unzip -o "${zipPath}" -d "${tempDir}/extracted"`, { timeout: 30000 });
+        const { execFileSync } = await import("node:child_process");
+        execFileSync("unzip", ["-o", zipPath, "-d", path.join(tempDir, "extracted")], { timeout: 30000 });
       }
       const extractedDir = path.join(tempDir, "extracted");
       const entries = await readdir(extractedDir);

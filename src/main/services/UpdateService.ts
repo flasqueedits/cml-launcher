@@ -1,7 +1,7 @@
 import { logger } from "../logger";
 
-const CURRENT_VERSION = "1.0.0";
-const GITHUB_REPO = "anomalyco/opencode";
+const CURRENT_VERSION = "1.1.0";
+const GITHUB_REPO = "flasqueedits/cml-launcher";
 
 export class UpdateService {
   async checkUpdate(): Promise<{ available: boolean; version: string; url: string; changelog: string; releaseDate: string }> {

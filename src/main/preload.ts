@@ -30,7 +30,7 @@ const api: Api = {
     const exitListener = (_e: unknown, code: number) => { ipcRenderer.removeListener("game-log", logListener); ipcRenderer.removeListener("game-exit", exitListener); onExit(code); };
     ipcRenderer.on("game-log", logListener);
     ipcRenderer.on("game-exit", exitListener);
-    return ipcRenderer.invoke("game:launch", options);
+    return ipcRenderer.invoke("game:launch", options).catch((err) => { ipcRenderer.removeListener("game-log", logListener); ipcRenderer.removeListener("game-exit", exitListener); throw err; });
   },
   installJava: (major: number, onProgress?: (p: ProgressInfo) => void) => {
     return new Promise<string>((resolve, reject) => {
@@ -94,8 +94,8 @@ const api: Api = {
   },
   getNews: () => ipcRenderer.invoke("news:get"),
   getPopularServers: () => ipcRenderer.invoke("server-browser:get"),
-  getPlayTime: (versionId: string) => ipcRenderer.invoke("playtime:get", versionId),
-  getAllPlayTime: () => ipcRenderer.invoke("playtime:get-all"),
+  getPlayTime: (gameDir: string, versionId: string) => ipcRenderer.invoke("playtime:get", gameDir, versionId),
+  getAllPlayTime: (gameDir: string) => ipcRenderer.invoke("playtime:get-all", gameDir),
   getCrashLogs: (gameDir: string) => ipcRenderer.invoke("crash-logs:list", gameDir),
   analyzeCrashLog: (log: string) => ipcRenderer.invoke("crash-logs:analyze", log),
   getSkin: (username: string) => ipcRenderer.invoke("skins:get", username),

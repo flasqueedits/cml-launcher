@@ -72,6 +72,13 @@ export default function App() {
   const [showLog, setShowLog] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<PanelTab>("play");
 
+  // Error otomatik temizleme
+  React.useEffect(() => {
+    if (!error) return;
+    const t = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(t);
+  }, [error]);
+
   const [servers, setServers] = React.useState<ServerInfo[]>([]);
   const [resourcePacks, setResourcePacks] = React.useState<ResourcePack[]>([]);
   const [shaderPacks, setShaderPacks] = React.useState<ShaderPack[]>([]);
@@ -121,7 +128,7 @@ export default function App() {
     if (activeTab === "mod-loaders" && selected) setModLoaders(await window.api.listModLoaders(selected));
     if (activeTab === "news") { const n = await window.api.getNews(); setNews(n); }
     if (activeTab === "server-browser") { const s = await window.api.getPopularServers(); setPopularServers(s); }
-    if (activeTab === "playtime") setPlayTimeRecords(await window.api.getAllPlayTime());
+    if (activeTab === "playtime") setPlayTimeRecords(await window.api.getAllPlayTime(gameDir));
     if (activeTab === "crash-logs") setCrashLogs(await window.api.getCrashLogs(gameDir));
     if (activeTab === "favorites") setFavoriteServers(await window.api.listFavoriteServers(gameDir));
     if (activeTab === "game-stats") setGameStats(await window.api.getGameStats(gameDir));
