@@ -281,6 +281,6 @@ export class IpcBridge {
 
 const defaults: AppSettings = {
   gameDir: "", javaPath: "", ramMb: 4096, width: 854, height: 480,
-  clientId: "00000000-0000-0000-0000-000000000000",
+  clientId: "1533899593576874159",
   fastPlay: false, autoStart: false, forceUpdate: false, customJvmArgs: "",
 };
