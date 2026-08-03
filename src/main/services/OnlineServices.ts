@@ -101,15 +101,32 @@ export class OnlineServices {
         const resp = await fetch(`${MODRINTH_API}/search?query=${encodeURIComponent(query)}&limit=20`, { signal: AbortSignal.timeout(10000) });
         if (!resp.ok) return [];
         const data = await resp.json() as { hits: Array<{ slug: string; title: string; description: string; downloads: number; icon_url: string; author: string; versions: string[]; categories: string[] }> };
-        return data.hits.map((h) => ({
-          id: h.slug, name: h.title, slug: h.slug, description: h.description,
-          downloads: h.downloads, iconUrl: h.icon_url, author: h.author,
-          version: h.versions[0] ?? "", source: "modrinth" as const,
-          downloadUrl: "", fileName: "", categories: h.categories, installable: false,
-        }));
+        const mods: OnlineMod[] = [];
+        for (const h of data.hits) {
+          // Her mod için versiyon bilgisini çek (download URL burada)
+          let downloadUrl = "";
+          let fileName = "";
+          let version = h.versions[0] ?? "";
+          try {
+            const vResp = await fetch(`${MODRINTH_API}/project/${h.slug}/version?loaders=[]&game_versions=["${version}"]`, { signal: AbortSignal.timeout(5000) });
+            if (vResp.ok) {
+              const versions = await vResp.json() as Array<{ files: Array<{ url: string; filename: string }> }>;
+              if (versions[0]?.files[0]) {
+                downloadUrl = versions[0].files[0].url;
+                fileName = versions[0].files[0].filename;
+              }
+            }
+          } catch { /* ignore */ }
+          mods.push({
+            id: h.slug, name: h.title, slug: h.slug, description: h.description,
+            downloads: h.downloads, iconUrl: h.icon_url, author: h.author,
+            version, source: "modrinth" as const,
+            downloadUrl, fileName, categories: h.categories, installable: !!downloadUrl,
+          });
+        }
+        return mods;
       } else {
         const resp = await fetch(`${CURSEFORGE_API}/api/v1/mods/search?gameId=432&classId=6&searchFilter=${encodeURIComponent(query)}&pageSize=20`, {
-          headers: { "x-api-key": "$2a$10$bL4bIL5pUWqfcO7KQtnMReakwtfHbNKh6v1uTpKlzhwoueEJQnPnm" },
           signal: AbortSignal.timeout(10000),
         });
         if (!resp.ok) return [];
@@ -129,7 +146,8 @@ export class OnlineServices {
   }
 
   async installMod(mod: OnlineMod, gameDir: string, onProgress?: (p: ProgressInfo) => void): Promise<void> {
-    if (!mod.downloadUrl) throw new Error("İndirme linki bulunamadı.");
+    if (!gameDir) throw new Error("Oyun klasörü ayarlanmamış. Ayarlardan gameDir seçin.");
+    if (!mod.downloadUrl) throw new Error("İndirme linki bulunamadı. Modun farklı bir sürümünü deneyin.");
     const modsDir = path.join(gameDir, "mods");
     await mkdir(modsDir, { recursive: true });
     const dest = path.join(modsDir, mod.fileName || `${mod.slug}.jar`);
@@ -276,7 +294,10 @@ export class OnlineServices {
       const skinProp = profile.properties.find((p) => p.name === "textures");
       if (!skinProp) return null;
       const decoded = JSON.parse(atob(skinProp.value)) as { textures: { SKIN: { url: string } } };
-      return decoded.textures?.SKIN?.url ?? null;
+      const url = decoded.textures?.SKIN?.url ?? null;
+      // HTTP'yi HTTPS'e çevir (CORS sorunu)
+      if (url && url.startsWith("http://")) return url.replace("http://", "https://");
+      return url;
     } catch { return null; }
   }
 
@@ -316,12 +337,25 @@ export class OnlineServices {
         const resp = await fetch(`${MODRINTH_API}/search?query=${encodeURIComponent(query)}&facets=[["project_type:modpack"]]&limit=20`, { signal: AbortSignal.timeout(10000) });
         if (!resp.ok) return [];
         const data = await resp.json() as { hits: Array<{ slug: string; title: string; description: string; downloads: number; icon_url: string; author: string; versions: string[]; categories: string[] }> };
-        return data.hits.map((h) => ({
-          id: h.slug, name: h.title, slug: h.slug, description: h.description,
-          downloads: h.downloads, iconUrl: h.icon_url, author: h.author,
-          version: h.versions[0] ?? "", mcVersion: h.versions[0] ?? "",
-          source: "modrinth" as const, downloadUrl: "", installed: false,
-        }));
+        const packs: ModpackInfo[] = [];
+        for (const h of data.hits) {
+          let downloadUrl = "";
+          let mcVersion = h.versions[0] ?? "";
+          try {
+            const vResp = await fetch(`${MODRINTH_API}/project/${h.slug}/version?loaders=["fabric","forge","quilt"]&game_versions=["${mcVersion}"]`, { signal: AbortSignal.timeout(5000) });
+            if (vResp.ok) {
+              const versions = await vResp.json() as Array<{ files: Array<{ url: string; filename: string }> }>;
+              if (versions[0]?.files[0]) downloadUrl = versions[0].files[0].url;
+            }
+          } catch { /* ignore */ }
+          packs.push({
+            id: h.slug, name: h.title, slug: h.slug, description: h.description,
+            downloads: h.downloads, iconUrl: h.icon_url, author: h.author,
+            version: mcVersion, mcVersion,
+            source: "modrinth" as const, downloadUrl, installed: !!downloadUrl,
+          });
+        }
+        return packs;
       } else {
         const resp = await fetch(`${CURSEFORGE_API}/api/v1/mods/search?gameId=432&classId=4471&searchFilter=${encodeURIComponent(query)}&pageSize=20`, {
           headers: { "x-api-key": "$2a$10$bL4bIL5pUWqfcO7KQtnMReakwtfHbNKh6v1uTpKlzhwoueEJQnPnm" },
