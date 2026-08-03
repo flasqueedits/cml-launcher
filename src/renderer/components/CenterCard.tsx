@@ -1,5 +1,6 @@
 import React from "react";
 import type { AppSettings, MinecraftRelease, PlayerProfile, ProgressInfo } from "../../shared/types";
+import { SkinAvatar } from "./SkinAvatar";
 
 interface Props {
   settings: AppSettings | null;
@@ -47,13 +48,19 @@ export function CenterCard({
   const selectedVersion = versions.find((v) => v.id === selected);
   const displayName = profile?.username ?? offlineName.trim() ?? "Kullanıcı";
   const [openDropdown, setOpenDropdown] = React.useState<"account" | "version" | null>(null);
+  const [skinUrl, setSkinUrl] = React.useState<string | null>(null);
+
+  // Skin çek
+  React.useEffect(() => {
+    const username = profile?.username ?? offlineName.trim();
+    if (!username || username.length < 3) { setSkinUrl(null); return; }
+    window.api.getSkin(username).then(setSkinUrl);
+  }, [profile?.username, offlineName]);
 
   return (
     <div className="glass-card relative z-10 w-[380px] rounded-2xl p-5">
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-dim text-sm font-bold text-accent-bright">
-          {displayName[0]?.toUpperCase() ?? "?"}
-        </div>
+        <SkinAvatar skinUrl={skinUrl} username={displayName} size={40} model="classic" />
         <div className="relative flex-1">
           <button
             onClick={() => setOpenDropdown(openDropdown === "account" ? null : "account")}

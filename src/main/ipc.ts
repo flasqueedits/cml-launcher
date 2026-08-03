@@ -50,12 +50,22 @@ export class IpcBridge {
     this.settingsCache = await this.settings.load();
     await this.servers.load();
     await this.profiles.load();
+
+    // Discord RPC otomatik bağlan
+    const clientId = this.settingsCache.clientId;
+    if (clientId && clientId !== "00000000-0000-0000-0000-000000000000") {
+      this.discord.connect(clientId).catch(() => {});
+    }
   }
 
   register() {
     ipcMain.handle("settings:get", () => this.settings.load());
     ipcMain.handle("settings:save", async (_e, partial: Partial<AppSettings>) => {
       this.settingsCache = await this.settings.save(partial);
+      // clientId değiştiyse Discord RPC'yi yeniden bağla
+      if (partial.clientId && partial.clientId !== "00000000-0000-0000-0000-000000000000") {
+        this.discord.connect(partial.clientId).catch(() => {});
+      }
       return this.settingsCache;
     });
 

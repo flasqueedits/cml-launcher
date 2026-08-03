@@ -1,4 +1,5 @@
 import React from "react";
+import { SkinAvatar } from "./SkinAvatar";
 
 interface Props {
   username: string;
@@ -102,7 +103,7 @@ export function SkinManager({ username, onUsernameChange, gameDir }: Props) {
             {!loading && !skinUrl && <div className="py-12 text-sm text-text-dim">Skin bulunamadı.</div>}
             {skinUrl && (
               <div className="text-center">
-                <img src={skinUrl} alt="Skin" className="mx-auto rounded-xl border border-border" style={{ imageRendering: "pixelated", maxHeight: "280px" }} />
+                <SkinAvatar skinUrl={skinUrl} username={username} size={200} model={model} />
                 <div className="mt-3 text-xs text-text-dim">{username}</div>
               </div>
             )}
@@ -153,7 +154,7 @@ export function SkinManager({ username, onUsernameChange, gameDir }: Props) {
           {/* Önizleme + Kaydet */}
           {selectedPreview && (
             <div className="mb-4 flex items-center gap-4 rounded-xl border border-border/50 bg-surface/30 p-3">
-              <img src={selectedPreview} alt="Önizleme" className="h-[120px] rounded-lg border border-border" style={{ imageRendering: "pixelated" }} />
+              <SkinAvatar skinUrl={selectedPreview} username="Önizleme" size={120} model={model} />
               <div className="flex-1">
                 <div className="mb-2 text-xs text-text-dim">Önizleme</div>
                 <div className="mb-1 text-[10px] text-text-dim">Model: {model === "classic" ? "Classic (Steve)" : "Slim (Alex)"}</div>

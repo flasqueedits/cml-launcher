@@ -16,33 +16,67 @@ export class DiscordService {
   private client: RPC.Client | null = null;
   private connected = false;
   private activityStartTime: number | null = null;
+  private currentClientId: string = "";
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
 
   async connect(clientId: string): Promise<boolean> {
+    if (!clientId || clientId === "00000000-0000-0000-0000-000000000000") {
+      logger.warn("Discord RPC: Geçersiz clientId, bağlantı atlandı");
+      return false;
+    }
+
     try {
       if (this.client) {
         this.client.destroy();
         this.client = null;
       }
 
+      this.currentClientId = clientId;
       this.client = new RPC.Client({ transport: "ipc" });
 
       this.client.on("ready", () => {
         this.connected = true;
+        this.reconnectAttempts = 0;
         logger.info("Discord RPC bağlantısı kuruldu");
       });
 
       this.client.on("disconnect", () => {
         this.connected = false;
-        logger.warn("Discord RPC bağlantısı kesildi");
+        logger.warn("Discord RPC bağlantısı kesildi, yeniden bağlanmaya çalışılıyor...");
+        this.scheduleReconnect();
       });
 
       await this.client.login({ clientId });
       return true;
     } catch (e) {
       this.connected = false;
-      logger.warn(`Discord RPC bağlantı hatası: ${String(e)}`);
+      const msg = String(e);
+      if (msg.includes("ECONNREFUSED") || msg.includes("ENOENT") || msg.includes("not found")) {
+        logger.warn("Discord RPC: Discord masaüstü uygulaması çalışmıyor veya RPC Kanalı bulunamadı");
+      } else {
+        logger.warn(`Discord RPC bağlantı hatası: ${msg}`);
+      }
+      this.scheduleReconnect();
       return false;
     }
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      logger.warn("Discord RPC: Maksimum yeniden bağlantı denemesi aşıldı");
+      return;
+    }
+    const delay = Math.min(5000 * Math.pow(2, this.reconnectAttempts), 60000);
+    this.reconnectAttempts++;
+    this.reconnectTimer = setTimeout(() => {
+      if (!this.connected && this.currentClientId) {
+        logger.info(`Discord RPC: Yeniden bağlanılıyor (deneme ${this.reconnectAttempts})...`);
+        this.connect(this.currentClientId);
+      }
+    }, delay);
   }
 
   async setActivity(opts: {
@@ -91,6 +125,11 @@ export class DiscordService {
   }
 
   disconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.maxReconnectAttempts = 0;
     if (this.client) {
       try {
         this.client.clearActivity();
