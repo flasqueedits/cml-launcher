@@ -213,7 +213,7 @@ export interface CrashLog {
   suggestion?: string;
 }
 
-export type PanelTab = "play" | "quick-play" | "servers" | "server-create" | "resource-packs" | "shader-packs" | "mods" | "mod-downloader" | "mod-loaders" | "modpacks" | "screenshots" | "worlds" | "profiles" | "skins" | "news" | "server-browser" | "playtime" | "game-stats" | "favorites" | "crash-logs" | "updates" | "settings" | "motd" | "backup" | "chat" | "achievements";
+export type PanelTab = "play" | "quick-play" | "servers" | "server-create" | "resource-packs" | "shader-packs" | "mods" | "mod-downloader" | "mod-loaders" | "modpacks" | "screenshots" | "worlds" | "profiles" | "skins" | "news" | "server-browser" | "playtime" | "game-stats" | "favorites" | "crash-logs" | "updates" | "settings" | "motd" | "backup" | "chat" | "achievements" | "console" | "perf" | "mod-updates" | "quick-actions" | "shortcuts" | "ping-history";
 
 export interface ModpackInfo {
   id: string;

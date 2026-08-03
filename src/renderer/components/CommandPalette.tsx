@@ -40,6 +40,11 @@ const ALL_COMMANDS: Omit<Command, "action">[] = [
   { id: "tab-modpacks", label: "Modpack", description: "Modpack ara ve kur", icon: "📚", tab: "modpacks", category: "Navigasyon" },
   { id: "tab-favorites", label: "Favoriler", description: "Favori sunucular", icon: "⭐", tab: "favorites", category: "Navigasyon" },
   { id: "tab-stats", label: "İstatistikler", description: "Oyun istatistikleri", icon: "📊", tab: "game-stats", category: "Navigasyon" },
+  { id: "tab-console", label: "Konsol Filtresi", description: "Logları filtrele ve ara", icon: "🖥️", tab: "console", category: "Navigasyon" },
+  { id: "tab-perf", label: "Performans", description: "RAM/CPU kullanımı", icon: "⚡", tab: "perf", category: "Navigasyon" },
+  { id: "tab-mod-updates", label: "Mod Güncellemeleri", description: "Mod güncelleme kontrolü", icon: "🔄", tab: "mod-updates", category: "Navigasyon" },
+  { id: "tab-quick-actions", label: "Hızlı Eylemler", description: "Hızlı eylemler paneli", icon: "🚀", tab: "quick-actions", category: "Navigasyon" },
+  { id: "tab-ping-history", label: "Ping Geçmişi", description: "Sunucu ping grafiği", icon: "📶", tab: "ping-history", category: "Navigasyon" },
 
   // Aksiyonlar
   { id: "action-play", label: "Oyunu Başlat", description: "Minecraft'ı başlat", icon: "🎮", shortcut: "Ctrl+Enter", category: "Aksiyon" },
@@ -52,6 +57,7 @@ const ALL_COMMANDS: Omit<Command, "action">[] = [
   { id: "action-backup", label: "Dünya Yedekle", description: "Aktif dünyayı yedekle", icon: "💾", category: "Aksiyon" },
   { id: "action-open-dir", label: "Klasörü Aç", description: "Oyun klasörünü aç", icon: "📁", category: "Aksiyon" },
   { id: "action-logout", label: "Çıkış Yap", description: "Hesaptan çıkış yap", icon: "🚪", category: "Aksiyon" },
+  { id: "action-shortcuts", label: "Klavye Kısayolları", description: "Tüm kısayolları göster", icon: "⌨️", shortcut: "Ctrl+/", category: "Aksiyon" },
 ];
 
 export function CommandPalette({ visible, onClose, onTabChange, onAction }: Props) {

@@ -32,6 +32,12 @@ import { ServerMOTDPanel } from "./components/ServerMOTDPanel";
 import { AutoBackupPanel } from "./components/AutoBackupPanel";
 import { ChatPanel } from "./components/ChatPanel";
 import { AchievementTracker } from "./components/AchievementTracker";
+import { ConsoleFilterPanel } from "./components/ConsoleFilterPanel";
+import { PerformanceMonitor } from "./components/PerformanceMonitor";
+import { ModUpdateChecker } from "./components/ModUpdateChecker";
+import { QuickActionsPanel } from "./components/QuickActionsPanel";
+import { KeyboardShortcutsHelp } from "./components/KeyboardShortcutsHelp";
+import { ServerPingHistory } from "./components/ServerPingHistory";
 
 function FrostParticles() {
   const particles = React.useMemo(() => Array.from({ length: 30 }, (_, i) => ({ id: i, left: `${Math.random() * 100}%`, delay: `${Math.random() * 8}s`, size: `${1 + Math.random() * 2}px`, opacity: 0.2 + Math.random() * 0.4 })), []);
@@ -95,6 +101,7 @@ export default function App() {
   const [checkingUpdate, setCheckingUpdate] = React.useState(false);
   const [showCommandPalette, setShowCommandPalette] = React.useState(false);
   const [showThemeCustomizer, setShowThemeCustomizer] = React.useState(false);
+  const [showShortcuts, setShowShortcuts] = React.useState(false);
   const [accentColor, setAccentColor] = React.useState("#c87b3a");
 
   React.useEffect(() => { if (versions.length > 0 && !selected) { const r = versions.find((v) => v.type === "release"); setSelected(r?.id ?? versions[0].id); } }, [versions, selected]);
@@ -161,6 +168,7 @@ export default function App() {
       }
       if (e.ctrlKey && e.key === "q") { e.preventDefault(); setActiveTab("quick-play"); return; }
       if (e.ctrlKey && e.key === "t") { e.preventDefault(); setShowThemeCustomizer((v) => !v); return; }
+      if (e.ctrlKey && e.key === "/") { e.preventDefault(); setShowShortcuts((v) => !v); return; }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -293,6 +301,11 @@ export default function App() {
           {activeTab === "backup" && <AutoBackupPanel gameDir={gameDir} />}
           {activeTab === "chat" && <ChatPanel currentServer={servers[0] ?? null} username={profile?.username ?? offlineName} />}
           {activeTab === "achievements" && <AchievementTracker />}
+          {activeTab === "console" && <ConsoleFilterPanel logs={logs.map((l) => ({ line: l.text, level: l.level }))} />}
+          {activeTab === "perf" && <PerformanceMonitor running={running} />}
+          {activeTab === "mod-updates" && <ModUpdateChecker gameDir={gameDir} />}
+          {activeTab === "quick-actions" && <QuickActionsPanel gameDir={gameDir} onForceUpdate={() => { setStatus("Zorla güncelleme başlatılıyor..."); window.api.listVersions(true).then(() => setStatus("Güncellendi.")); }} onRefreshMods={loadData} onClearCache={() => { setStatus("Önbellek temizlendi!"); }} onOpenDir={() => { settings?.gameDir && window.api.openFolder(settings.gameDir); }} onRepairJava={() => { window.api.detectJava().then((f) => { if (f) save({ javaPath: f }); }); setStatus("Java kontrol edildi."); }} />}
+          {activeTab === "ping-history" && <ServerPingHistory servers={servers} onRefresh={loadData} onPing={async (a, p) => window.api.pingServer(a, p)} />}
           <LogPanel lines={logs} running={running} visible={showLog} onClose={() => setShowLog(false)} />
           {error && <div className="glass-card absolute bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-lg border border-danger/40 px-4 py-2 text-sm text-danger">{error}</div>}
         </main>
@@ -322,6 +335,11 @@ export default function App() {
         <NavIcon tab="backup" active={activeTab} onClick={setActiveTab} title="Yedekleme"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg></NavIcon>
         <NavIcon tab="chat" active={activeTab} onClick={setActiveTab} title="Sohbet"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg></NavIcon>
         <NavIcon tab="achievements" active={activeTab} onClick={setActiveTab} title="Başarılar"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" /></svg></NavIcon>
+        <NavIcon tab="console" active={activeTab} onClick={setActiveTab} title="Konsol Filtresi"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" /></svg></NavIcon>
+        <NavIcon tab="perf" active={activeTab} onClick={setActiveTab} title="Performans"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg></NavIcon>
+        <NavIcon tab="mod-updates" active={activeTab} onClick={setActiveTab} title="Mod Güncellemeleri"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg></NavIcon>
+        <NavIcon tab="quick-actions" active={activeTab} onClick={setActiveTab} title="Hızlı Eylemler"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg></NavIcon>
+        <NavIcon tab="ping-history" active={activeTab} onClick={setActiveTab} title="Ping Geçmişi"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg></NavIcon>
         <NavIcon tab="updates" active={activeTab} onClick={() => { setActiveTab("updates"); handleCheckUpdate(); }} title="Güncelleme"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg></NavIcon>
         <NavIcon tab="settings" active={activeTab} onClick={() => setShowSettings(true)} title="Ayarlar"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg></NavIcon>
       </div>
@@ -333,12 +351,19 @@ export default function App() {
         else if (id === "action-java") { window.api.detectJava().then((f) => { if (f) save({ javaPath: f }); }); }
         else if (id === "action-open-dir") { settings?.gameDir && window.api.openFolder(settings.gameDir); }
         else if (id === "action-logout") logout();
+        else if (id === "action-shortcuts") setShowShortcuts(true);
         setShowCommandPalette(false);
       }} />
       {showThemeCustomizer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowThemeCustomizer(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <ThemeCustomizer currentAccent={accentColor} onThemeChange={setAccentColor} onClose={() => setShowThemeCustomizer(false)} />
+        </div>
+      )}
+      {showShortcuts && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowShortcuts(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <KeyboardShortcutsHelp onClose={() => setShowShortcuts(false)} />
         </div>
       )}
     </div>
