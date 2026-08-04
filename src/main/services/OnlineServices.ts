@@ -127,6 +127,7 @@ export class OnlineServices {
         return mods;
       } else {
         const resp = await fetch(`${CURSEFORGE_API}/api/v1/mods/search?gameId=432&classId=6&searchFilter=${encodeURIComponent(query)}&pageSize=20`, {
+          headers: { "x-api-key": "$2a$10$6QDhrJwkb8JlV1YYb5wtJOaoM6sn0xq3scMZPMGU92rDCsEcqXry2" },
           signal: AbortSignal.timeout(10000),
         });
         if (!resp.ok) return [];
@@ -358,7 +359,7 @@ export class OnlineServices {
         return packs;
       } else {
         const resp = await fetch(`${CURSEFORGE_API}/api/v1/mods/search?gameId=432&classId=4471&searchFilter=${encodeURIComponent(query)}&pageSize=20`, {
-          headers: { "x-api-key": "$2a$10$bL4bIL5pUWqfcO7KQtnMReakwtfHbNKh6v1uTpKlzhwoueEJQnPnm" },
+          headers: { "x-api-key": "$2a$10$6QDhrJwkb8JlV1YYb5wtJOaoM6sn0xq3scMZPMGU92rDCsEcqXry2" },
           signal: AbortSignal.timeout(10000),
         });
         if (!resp.ok) return [];
