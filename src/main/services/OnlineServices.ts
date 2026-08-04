@@ -476,4 +476,34 @@ export class OnlineServices {
 
     return { totalPlayTimeMs, totalSessions, uniqueVersions, favoriteVersion, totalMods, totalResourcePacks, totalWorlds, totalScreenshots, crashCount, lastPlayed, dailyPlaytime };
   }
+
+  async checkModUpdates(gameDir: string): Promise<Array<{ name: string; currentVersion: string; latestVersion: string; source: "curseforge" | "modrinth"; downloadUrl: string }>> {
+    const modsDir = path.join(gameDir, "mods");
+    const updates: Array<{ name: string; currentVersion: string; latestVersion: string; source: "curseforge" | "modrinth"; downloadUrl: string }> = [];
+    try {
+      const files = await readdir(modsDir);
+      const jarFiles = files.filter((f) => f.endsWith(".jar") && !f.endsWith(".disabled"));
+      for (const file of jarFiles) {
+        const modName = file.replace(/\.jar$/, "").replace(/[-_]\d+\.\d+\.\d+.*$/, "");
+        // Modrinth'te ara
+        try {
+          const resp = await fetch(`${MODRINTH_API}/search?query=${encodeURIComponent(modName)}&limit=1`, { signal: AbortSignal.timeout(5000) });
+          if (!resp.ok) continue;
+          const data = await resp.json() as { hits: Array<{ slug: string; title: string }> };
+          if (data.hits.length === 0) continue;
+          const mod = data.hits[0];
+          const vResp = await fetch(`${MODRINTH_API}/project/${mod.slug}/version?limit=1`, { signal: AbortSignal.timeout(5000) });
+          if (!vResp.ok) continue;
+          const versions = await vResp.json() as Array<{ version_number: string; files: Array<{ url: string; filename: string }> }>;
+          if (versions.length === 0 || !versions[0].files[0]) continue;
+          const latestVersion = versions[0].version_number;
+          const fileVersion = file.match(/[-_](\d+\.\d+\.\d+)/)?.[1] ?? "";
+          if (fileVersion && latestVersion !== fileVersion) {
+            updates.push({ name: modName, currentVersion: fileVersion, latestVersion, source: "modrinth", downloadUrl: versions[0].files[0].url });
+          }
+        } catch { /* ignore */ }
+      }
+    } catch { /* ignore */ }
+    return updates;
+  }
 }

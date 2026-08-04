@@ -1,5 +1,6 @@
 import React from "react";
 import type { AppSettings } from "../../shared/types";
+import { t } from "../../shared/i18n";
 
 interface Props {
   settings: AppSettings | null;
@@ -42,6 +43,15 @@ export function SettingsPanel({ settings, onSave, onClose, onDetectJava }: Props
           <div className="grid grid-cols-2 gap-3">
             <label className="flex items-center gap-2 text-sm text-text-dim"><input type="checkbox" checked={form.autoStart} onChange={(e) => set("autoStart", e.target.checked)} className="h-4 w-4 rounded border-border bg-surface-2 accent-accent" /> Otomatik başlat</label>
             <label className="flex items-center gap-2 text-sm text-text-dim"><input type="checkbox" checked={form.forceUpdate} onChange={(e) => set("forceUpdate", e.target.checked)} className="h-4 w-4 rounded border-border bg-surface-2 accent-accent" /> Zorla güncelle</label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Dil">
+              <select className="input-field" value={form.language ?? "tr"} onChange={(e) => set("language", e.target.value as "tr" | "en")}>
+                <option value="tr">Türkçe</option>
+                <option value="en">English</option>
+              </select>
+            </Field>
+            <label className="flex items-center gap-2 pt-5 text-sm text-text-dim"><input type="checkbox" checked={form.autoBackup ?? false} onChange={(e) => set("autoBackup", e.target.checked)} className="h-4 w-4 rounded border-border bg-surface-2 accent-accent" /> Launch öncesi yedekleme</label>
           </div>
         </div>
         <div className="mt-4 flex items-center justify-between border-t border-border pt-3">

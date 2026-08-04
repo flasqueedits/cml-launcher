@@ -38,6 +38,10 @@ import { ModUpdateChecker } from "./components/ModUpdateChecker";
 import { QuickActionsPanel } from "./components/QuickActionsPanel";
 import { KeyboardShortcutsHelp } from "./components/KeyboardShortcutsHelp";
 import { ServerPingHistory } from "./components/ServerPingHistory";
+import { InstanceManager } from "./components/InstanceManager";
+import { ConfigEditor } from "./components/ConfigEditor";
+import { ProfileImportExport } from "./components/ProfileImportExport";
+import { t, setLocale, getLocale } from "../shared/i18n";
 
 function FrostParticles() {
   const particles = React.useMemo(() => Array.from({ length: 30 }, (_, i) => ({ id: i, left: `${Math.random() * 100}%`, delay: `${Math.random() * 8}s`, size: `${1 + Math.random() * 2}px`, opacity: 0.2 + Math.random() * 0.4 })), []);
@@ -110,6 +114,27 @@ export default function App() {
   const [showThemeCustomizer, setShowThemeCustomizer] = React.useState(false);
   const [showShortcuts, setShowShortcuts] = React.useState(false);
   const [accentColor, setAccentColor] = React.useState("#c87b3a");
+  const [instances, setInstances] = React.useState<{ id: string; name: string; gameDir: string; version: string; modCount: number; lastPlayed: string }[]>([]);
+  const [activeInstanceId, setActiveInstanceId] = React.useState("");
+  const [lang, setLangState] = React.useState<"tr" | "en">(settings?.language ?? "tr");
+
+  // Dil değiştir
+  const changeLang = React.useCallback((l: "tr" | "en") => {
+    setLangState(l);
+    setLocale(l);
+    save({ language: l });
+  }, [save]);
+
+  // Instance'ları yükle
+  const loadInstances = React.useCallback(async () => {
+    const list = await window.api.listInstances();
+    setInstances(list);
+  }, []);
+
+  // Dil ayarını yükle
+  React.useEffect(() => {
+    if (settings?.language) { setLocale(settings.language); setLangState(settings.language); }
+  }, [settings?.language]);
 
   React.useEffect(() => { if (versions.length > 0 && !selected) { const r = versions.find((v) => v.type === "release"); setSelected(r?.id ?? versions[0].id); } }, [versions, selected]);
   React.useEffect(() => { if (!profile && offlineName) setOfflineName(""); }, [profile]);
@@ -132,7 +157,8 @@ export default function App() {
     if (activeTab === "crash-logs") setCrashLogs(await window.api.getCrashLogs(gameDir));
     if (activeTab === "favorites") setFavoriteServers(await window.api.listFavoriteServers(gameDir));
     if (activeTab === "game-stats") setGameStats(await window.api.getGameStats(gameDir));
-  }, [activeTab, gameDir, selected]);
+    if (activeTab === "instances") loadInstances();
+  }, [activeTab, gameDir, selected, loadInstances]);
 
   React.useEffect(() => { loadData(); }, [loadData]);
 
@@ -149,6 +175,11 @@ export default function App() {
     if (!gd) { const mc = await window.api.getSettings(); if (!mc.gameDir) { setError("Oyun klasörü ayarlanmamış."); return; } gd = mc.gameDir; }
     setBusy(true); setError(null); clear();
     try {
+      // Otomatik yedekleme (launch öncesi)
+      if (settings?.autoBackup && gd) {
+        setStatus("Dünyalar yedekleniyor...");
+        await window.api.backupAllWorlds(gd).catch(() => {});
+      }
       const version = await window.api.resolveVersion(selected);
       if (!javaPath) { const d = await window.api.detectJava(); if (d) javaPath = d; }
       if (!javaPath) { const major = version.javaMajor > 8 ? version.javaMajor : 17; setStatus(`Java ${major} kuruluyor...`); javaPath = await window.api.installJava(major, (p) => { setProgress(p); setStatus(p.message); }); }
@@ -214,7 +245,9 @@ export default function App() {
     setInstallingLoader(loader.name);
     try {
       await window.api.installModLoader(loader, gameDir);
-      setStatus(`${loader.name} kuruldu!`);
+      // Otomatik profil oluştur
+      await window.api.addGameProfile({ name: `${loader.name} ${loader.version}`, username: profile?.username ?? offlineName.trim() ?? "Steve", uuid: "", type: "offline" }).catch(() => {});
+      setStatus(`${loader.name} kuruldu! Otomatik profil oluşturuldu.`);
     } catch (e) { setError(String(e)); } finally { setInstallingLoader(null); }
   };
 
@@ -313,6 +346,9 @@ export default function App() {
           {activeTab === "mod-updates" && <ModUpdateChecker gameDir={gameDir} />}
           {activeTab === "quick-actions" && <QuickActionsPanel gameDir={gameDir} onForceUpdate={() => { setStatus("Zorla güncelleme başlatılıyor..."); window.api.listVersions(true).then(() => setStatus("Güncellendi.")); }} onRefreshMods={loadData} onClearCache={() => { setStatus("Önbellek temizlendi!"); }} onOpenDir={() => { settings?.gameDir && window.api.openFolder(settings.gameDir); }} onRepairJava={() => { window.api.detectJava().then((f) => { if (f) save({ javaPath: f }); }); setStatus("Java kontrol edildi."); }} />}
           {activeTab === "ping-history" && <ServerPingHistory servers={servers} onRefresh={loadData} onPing={async (a, p) => window.api.pingServer(a, p)} />}
+          {activeTab === "instances" && <InstanceManager instances={instances} activeId={activeInstanceId} onSelect={async (id) => { setActiveInstanceId(id); await window.api.setActiveInstance(id); loadData(); }} onCreate={async (name) => { await window.api.createInstance(name); loadInstances(); setStatus("Instance oluşturuldu!"); }} onDelete={async (id) => { await window.api.deleteInstance(id); loadInstances(); setStatus("Instance silindi!"); }} onRename={async (id, name) => { await window.api.renameInstance(id, name); loadInstances(); }} />}
+          {activeTab === "config-editor" && <ConfigEditor gameDir={gameDir} />}
+          {activeTab === "import-export" && <ProfileImportExport gameDir={gameDir} mods={mods} settings={settings} onImport={loadData} />}
           <LogPanel lines={logs} running={running} visible={showLog} onClose={() => setShowLog(false)} />
           {error && <div className="glass-card absolute bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-lg border border-danger/40 px-4 py-2 text-sm text-danger">{error}</div>}
         </main>
@@ -347,6 +383,9 @@ export default function App() {
         <NavIcon tab="mod-updates" active={activeTab} onClick={setActiveTab} title="Mod Güncellemeleri"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg></NavIcon>
         <NavIcon tab="quick-actions" active={activeTab} onClick={setActiveTab} title="Hızlı Eylemler"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg></NavIcon>
         <NavIcon tab="ping-history" active={activeTab} onClick={setActiveTab} title="Ping Geçmişi"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg></NavIcon>
+        <NavIcon tab="instances" active={activeTab} onClick={setActiveTab} title="Instance'lar"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="8" height="8" rx="1" /><rect x="14" y="2" width="8" height="8" rx="1" /><rect x="2" y="14" width="8" height="8" rx="1" /><rect x="14" y="14" width="8" height="8" rx="1" /></svg></NavIcon>
+        <NavIcon tab="config-editor" active={activeTab} onClick={setActiveTab} title="Config Editör"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg></NavIcon>
+        <NavIcon tab="import-export" active={activeTab} onClick={setActiveTab} title="İçe/Dışa Aktar"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg></NavIcon>
         <NavIcon tab="updates" active={activeTab} onClick={() => { setActiveTab("updates"); handleCheckUpdate(); }} title="Güncelleme"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg></NavIcon>
         <NavIcon tab="settings" active={activeTab} onClick={() => setShowSettings(true)} title="Ayarlar"><svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg></NavIcon>
       </div>

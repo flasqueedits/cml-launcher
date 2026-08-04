@@ -53,6 +53,8 @@ export interface AppSettings {
   autoStart: boolean;
   forceUpdate: boolean;
   customJvmArgs: string;
+  language?: "tr" | "en";
+  autoBackup?: boolean;
 }
 
 export interface ProgressInfo {
@@ -213,7 +215,7 @@ export interface CrashLog {
   suggestion?: string;
 }
 
-export type PanelTab = "play" | "quick-play" | "servers" | "server-create" | "resource-packs" | "shader-packs" | "mods" | "mod-downloader" | "mod-loaders" | "modpacks" | "screenshots" | "worlds" | "profiles" | "skins" | "news" | "server-browser" | "playtime" | "game-stats" | "favorites" | "crash-logs" | "updates" | "settings" | "motd" | "backup" | "chat" | "achievements" | "console" | "perf" | "mod-updates" | "quick-actions" | "shortcuts" | "ping-history";
+export type PanelTab = "play" | "quick-play" | "servers" | "server-create" | "resource-packs" | "shader-packs" | "mods" | "mod-downloader" | "mod-loaders" | "modpacks" | "screenshots" | "worlds" | "profiles" | "skins" | "news" | "server-browser" | "playtime" | "game-stats" | "favorites" | "crash-logs" | "updates" | "settings" | "motd" | "backup" | "chat" | "achievements" | "console" | "perf" | "mod-updates" | "quick-actions" | "shortcuts" | "ping-history" | "instances" | "config-editor" | "import-export";
 
 export interface ModpackInfo {
   id: string;
@@ -331,6 +333,17 @@ export interface Api {
   addFavoriteServer(gameDir: string, server: Omit<FavoriteServer, "id" | "addedAt">): Promise<FavoriteServer>;
   removeFavoriteServer(gameDir: string, id: string): Promise<void>;
   getGameStats(gameDir: string): Promise<GameStats>;
+  listConfigFiles(gameDir: string): Promise<{ name: string; path: string; content: string }[]>;
+  readConfigFile(filePath: string): Promise<string>;
+  writeConfigFile(filePath: string, content: string): Promise<void>;
+  listInstances(): Promise<{ id: string; name: string; gameDir: string; version: string; modCount: number; lastPlayed: string }[]>;
+  createInstance(name: string): Promise<{ id: string; name: string; gameDir: string }>;
+  deleteInstance(id: string): Promise<void>;
+  renameInstance(id: string, name: string): Promise<void>;
+  setActiveInstance(id: string): Promise<void>;
+  checkModUpdates(gameDir: string): Promise<Array<{ name: string; currentVersion: string; latestVersion: string; source: "curseforge" | "modrinth"; downloadUrl: string }>>;
+  installModUpdate(gameDir: string, mod: { name: string; downloadUrl: string; source: string }): Promise<void>;
+  backupAllWorlds(gameDir: string): Promise<void>;
   windowMinimize(): void;
   windowMaximize(): void;
   windowClose(): void;

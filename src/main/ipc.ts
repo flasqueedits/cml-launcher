@@ -219,6 +219,106 @@ export class IpcBridge {
     ipcMain.handle("local-server:stop", () => this.mods.stopLocalServer());
     ipcMain.handle("local-server:status", () => this.mods.getLocalServerStatus());
 
+    // Config editör
+    ipcMain.handle("config:list", async (_e, gameDir: string) => {
+      const configDir = path.join(gameDir, "config");
+      try {
+        await fs.mkdir(configDir, { recursive: true });
+        const files = await fs.readdir(configDir);
+        const result: { name: string; path: string; content: string }[] = [];
+        for (const f of files) {
+          if (/\.(cfg|toml|json|properties|txt|yml|yaml)$/i.test(f)) {
+            const content = await fs.readFile(path.join(configDir, f), "utf-8").catch(() => "");
+            result.push({ name: f, path: path.join(configDir, f), content });
+          }
+        }
+        return result;
+      } catch { return []; }
+    });
+    ipcMain.handle("config:read", async (_e, filePath: string) => {
+      return await fs.readFile(filePath, "utf-8").catch(() => "");
+    });
+    ipcMain.handle("config:write", async (_e, filePath: string, content: string) => {
+      await fs.writeFile(filePath, content, "utf-8");
+    });
+
+    // Instance yönetimi
+    ipcMain.handle("instances:list", async () => {
+      const instancesDir = path.join(this.userDataDir, "instances");
+      try {
+        await fs.mkdir(instancesDir, { recursive: true });
+        const files = await fs.readdir(instancesDir);
+        const result: { id: string; name: string; gameDir: string; version: string; modCount: number; lastPlayed: string }[] = [];
+        for (const f of files) {
+          if (!f.endsWith(".json")) continue;
+          const data = JSON.parse(await fs.readFile(path.join(instancesDir, f), "utf-8"));
+          const modsDir = path.join(data.gameDir, "mods");
+          let modCount = 0;
+          try { const mods = await fs.readdir(modsDir); modCount = mods.filter((m: string) => m.endsWith(".jar")).length; } catch { /* ignore */ }
+          result.push({ id: f.replace(".json", ""), name: data.name, gameDir: data.gameDir, version: data.version ?? "", modCount, lastPlayed: data.lastPlayed ?? "" });
+        }
+        return result;
+      } catch { return []; }
+    });
+    ipcMain.handle("instances:create", async (_e, name: string) => {
+      const instancesDir = path.join(this.userDataDir, "instances");
+      await fs.mkdir(instancesDir, { recursive: true });
+      const id = `instance_${Date.now()}`;
+      const gameDir = path.join(this.userDataDir, "instances", id);
+      await fs.mkdir(path.join(gameDir, "mods"), { recursive: true });
+      await fs.mkdir(path.join(gameDir, "resourcepacks"), { recursive: true });
+      await fs.mkdir(path.join(gameDir, "config"), { recursive: true });
+      await fs.mkdir(path.join(gameDir, "saves"), { recursive: true });
+      await fs.writeFile(path.join(instancesDir, `${id}.json`), JSON.stringify({ name, gameDir, version: "", lastPlayed: "" }, null, 2));
+      return { id, name, gameDir };
+    });
+    ipcMain.handle("instances:delete", async (_e, id: string) => {
+      const filePath = path.join(this.userDataDir, "instances", `${id}.json`);
+      await fs.rm(filePath, { force: true });
+    });
+    ipcMain.handle("instances:rename", async (_e, id: string, name: string) => {
+      const filePath = path.join(this.userDataDir, "instances", `${id}.json`);
+      try {
+        const data = JSON.parse(await fs.readFile(filePath, "utf-8"));
+        data.name = name;
+        await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+      } catch { /* ignore */ }
+    });
+    ipcMain.handle("instances:set-active", async (_e, id: string) => {
+      const instancesDir = path.join(this.userDataDir, "instances");
+      const data = JSON.parse(await fs.readFile(path.join(instancesDir, `${id}.json`), "utf-8"));
+      this.settingsCache.gameDir = data.gameDir;
+      await this.settings.save({ gameDir: data.gameDir });
+    });
+
+    // Mod güncelleme kontrolü
+    ipcMain.handle("mod-updates:check", async (_e, gameDir: string) => {
+      return await this.online.checkModUpdates(gameDir);
+    });
+    ipcMain.handle("mod-updates:install", async (_e, gameDir: string, mod: { name: string; downloadUrl: string; source: string }) => {
+      const modsDir = path.join(gameDir, "mods");
+      await fs.mkdir(modsDir, { recursive: true });
+      const dest = path.join(modsDir, `${mod.name}.jar`);
+      await this.online.downloadFile(mod.downloadUrl, dest);
+    });
+
+    // Tüm dünyaları yedekle
+    ipcMain.handle("worlds:backup-all", async (_e, gameDir: string) => {
+      const savesDir = path.join(gameDir, "saves");
+      const backupDir = path.join(gameDir, "backups", "worlds");
+      await fs.mkdir(backupDir, { recursive: true });
+      try {
+        const entries = await fs.readdir(savesDir, { withFileTypes: true });
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+        for (const e of entries) {
+          if (!e.isDirectory()) continue;
+          const src = path.join(savesDir, e.name);
+          const dst = path.join(backupDir, `${e.name}_${timestamp}`);
+          await fs.cp(src, dst, { recursive: true }).catch(() => {});
+        }
+      } catch { /* ignore */ }
+    });
+
     ipcMain.handle("notifications:send", (_e, title: string, body: string) => {
       new Notification({ title, body, silent: false }).show();
     });
